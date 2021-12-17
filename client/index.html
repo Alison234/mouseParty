@@ -15,7 +15,7 @@
       }
       .cursor {
         position: absolute;
-        border-radius: 10px;
+        border-radius: 50px;
         width: 10px;
         height: 10px;
         color: brown;
@@ -27,33 +27,57 @@
       let connected = false;
       let sessionId = 0
       let socket = new WebSocket("ws://localhost:4567/ws");
-      let cursors = {};
+      let cursors = [];
+
+
       socket.onopen = () => {
         console.log("web socket conn open")
         connected = true;
         console.log(connected)
       };
+
       socket.onmessage = (e) => {
         const data = JSON.parse(e.data);
-        sessionId = data.sessionId;
-        const cursor = cursors[sessionId];
-        console.log(data)
+        sessionId = data.sessionId
+        roomId = data.roomId
+        console.log(e.data)
+
         switch (data.method) {
           case 'move':
             const style = `translate(${data.x}px, ${data.y}px)`;
+            const cursor = cursors[sessionId];
             if (cursor) {
               cursor.el.style.transform = style;
               break;
             }
+
+
             const el = document.createElement('div');
             el.className = 'cursor';
             el.style.background = getRandomColor();
             el.style.transform = style;
+
             document.body.appendChild(el);
-            cursors[sessionId] = {};
-            cursors[sessionId].el = el;
+            cursors.push(el) ;
+
+            // const el = document.createElement('div');
+            // el.className = 'cursor';
+            // el.style.background = getRandomColor();
+            // el.style.transform = style;
+
+            // document.body.appendChild(el);
+
+            // //cursors[roomId] = {};
+            // cursors.append(el) ;
             break;
-          case 'leave':
+
+            case 'register':
+            sessionId = data.sessionId;
+
+
+            break;
+
+            case 'leave':
             if (cursor) {
               cursor.el.remove();
               delete cursors[sessionId];
@@ -78,6 +102,7 @@
       }
       document.addEventListener('mousemove', (e) => {
         if (connected) {
+        console.log(sessionId)
         socket.send(JSON.stringify({ x: e.clientX, y: e.clientY,method:'move',sessionId:sessionId}));
         }
       });

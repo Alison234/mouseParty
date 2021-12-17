@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -34,7 +35,15 @@ func (s *subscription) writePump() {
 				c.write(websocket.CloseMessage, []byte{})
 				return
 			}
-			if err := c.write(websocket.TextMessage, message); err != nil {
+
+			registerMsg := RegisterMSG{}
+			_ = json.Unmarshal(message, &registerMsg)
+
+			registerMsg.SessionId = s.sessionId
+			registerMsg.RoomId = 0
+			data, _ := json.Marshal(registerMsg)
+
+			if err := c.write(websocket.TextMessage, data); err != nil {
 				return
 			}
 		case <-ticker.C:
@@ -67,7 +76,7 @@ func (s subscription) readPump() {
 			}
 			break
 		}
-		m := message{msg, s.room}
+		m := message{msg, "0", s.sessionId}
 		h.broadcast <- m
 	}
 }

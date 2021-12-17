@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -20,14 +21,43 @@ func (h *hub) run() {
 			fmt.Println(s.sessionId)
 			connections := h.rooms[s.room]
 			logrus.Info("New subscriber")
+
+			registerMsg := RegisterMSG{
+				Method:    "register",
+				SessionId: s.sessionId,
+				RoomId:    0,
+			}
+
+			data, err := json.Marshal(registerMsg)
+			if err != nil {
+				logrus.Info("failed send register msg to subscriber")
+			}
+
+			s.conn.send <- data
+
 			if connections == nil {
 				connections = make(map[*connection]bool)
 				h.rooms[s.room] = connections
 			}
 			h.rooms[s.room][s.conn] = true
+
 		case s := <-h.unregister:
 			connections := h.rooms[s.room]
 			logrus.Info("Out subscriber")
+
+			outSubscribeMsg := RegisterMSG{
+				Method:    "leave",
+				SessionId: s.sessionId,
+				RoomId:    0,
+			}
+
+			data, err := json.Marshal(outSubscribeMsg)
+			if err != nil {
+				logrus.Info("failed send register msg to subscriber")
+			}
+
+			s.conn.send <- data
+
 			if connections != nil {
 				if _, ok := connections[s.conn]; ok {
 					delete(connections, s.conn)
@@ -38,6 +68,7 @@ func (h *hub) run() {
 				}
 			}
 		case m := <-h.broadcast:
+
 			connections := h.rooms[m.room]
 			for c := range connections {
 				select {
