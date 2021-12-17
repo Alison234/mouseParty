@@ -16,8 +16,8 @@
       .cursor {
         position: absolute;
         border-radius: 50px;
-        width: 10px;
-        height: 10px;
+        width: 50px;
+        height: 50px;
         color: brown;
       }
     </style>
@@ -27,7 +27,7 @@
       let connected = false;
       let sessionId = 0
       let socket = new WebSocket("ws://localhost:4567/ws");
-      let cursors = [];
+      let cursors = {};
 
 
       socket.onopen = () => {
@@ -40,47 +40,33 @@
         const data = JSON.parse(e.data);
         sessionId = data.sessionId
         roomId = data.roomId
-        console.log(e.data)
+        console.log(roomId)
+        const cursor = cursors[sessionId];
 
         switch (data.method) {
           case 'move':
             const style = `translate(${data.x}px, ${data.y}px)`;
-            const cursor = cursors[sessionId];
             if (cursor) {
               cursor.el.style.transform = style;
               break;
             }
-
-
             const el = document.createElement('div');
             el.className = 'cursor';
             el.style.background = getRandomColor();
             el.style.transform = style;
-
             document.body.appendChild(el);
-            cursors.push(el) ;
-
-            // const el = document.createElement('div');
-            // el.className = 'cursor';
-            // el.style.background = getRandomColor();
-            // el.style.transform = style;
-
-            // document.body.appendChild(el);
-
-            // //cursors[roomId] = {};
-            // cursors.append(el) ;
+            cursors[roomId] = {};
+            cursors[roomId].el = el;
             break;
 
             case 'register':
             sessionId = data.sessionId;
-
-
             break;
 
             case 'leave':
             if (cursor) {
               cursor.el.remove();
-              delete cursors[sessionId];
+              delete cursors[roomId];
             }
             break;
         }
@@ -102,7 +88,6 @@
       }
       document.addEventListener('mousemove', (e) => {
         if (connected) {
-        console.log(sessionId)
         socket.send(JSON.stringify({ x: e.clientX, y: e.clientY,method:'move',sessionId:sessionId}));
         }
       });
