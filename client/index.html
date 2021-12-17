@@ -41,7 +41,7 @@
         sessionId = data.sessionId
         roomId = data.roomId
         console.log(roomId)
-        const cursor = cursors[sessionId];
+        const cursor = cursors[roomId];
 
         switch (data.method) {
           case 'move':
@@ -87,6 +87,14 @@
         return color;
       }
       document.addEventListener('mousemove', (e) => {
+        const style = `translate(${e.clientX}px, ${e.clientY}px)`;
+        const el = document.createElement('div');
+        el.className = 'cursor';
+        el.style.background = getRandomColor();
+        el.style.transform = style;
+        document.body.appendChild(el);
+
+        console.log(e.clientX)
         if (connected) {
         socket.send(JSON.stringify({ x: e.clientX, y: e.clientY,method:'move',sessionId:sessionId}));
         }
