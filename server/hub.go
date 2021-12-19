@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 )
@@ -18,7 +17,6 @@ func (h *hub) run() {
 	for {
 		select {
 		case s := <-h.register:
-			fmt.Println(s.sessionId)
 			connections := h.rooms[s.room]
 			logrus.Info("New subscriber")
 
@@ -68,7 +66,6 @@ func (h *hub) run() {
 				}
 			}
 		case m := <-h.broadcast:
-
 			connections := h.rooms[m.room]
 			for c := range connections {
 				select {

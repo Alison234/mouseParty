@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 
@@ -36,14 +35,7 @@ func (s *subscription) writePump() {
 				return
 			}
 
-			registerMsg := RegisterMSG{}
-			_ = json.Unmarshal(message, &registerMsg)
-
-			registerMsg.SessionId = s.sessionId
-			registerMsg.RoomId = 0
-			data, _ := json.Marshal(registerMsg)
-
-			if err := c.write(websocket.TextMessage, data); err != nil {
+			if err := c.write(websocket.TextMessage, message); err != nil {
 				return
 			}
 		case <-ticker.C:

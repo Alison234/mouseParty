@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
@@ -13,8 +15,8 @@ var h = hub{
 }
 
 func main() {
-
 	go h.run()
+	mx := sync.Mutex{}
 	router := gin.New()
 	router.LoadHTMLFiles("..//client/index.html")
 
@@ -23,8 +25,9 @@ func main() {
 	})
 
 	router.GET("/ws", func(c *gin.Context) {
-		serveWs(c.Writer, c.Request, "0")
+		serveWs(c.Writer, c.Request, "0", &mx)
 	})
+
 	logrus.Info("Staring server")
 
 	err := router.Run("localhost:4567")

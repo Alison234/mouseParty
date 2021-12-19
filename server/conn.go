@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
@@ -22,7 +23,7 @@ type connection struct {
 	send chan []byte
 }
 
-func serveWs(w http.ResponseWriter, r *http.Request, roomId string) {
+func serveWs(w http.ResponseWriter, r *http.Request, roomId string, mx *sync.Mutex) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logrus.Errorf("upgreder err %v", err)
@@ -31,7 +32,11 @@ func serveWs(w http.ResponseWriter, r *http.Request, roomId string) {
 
 	c := &connection{send: make(chan []byte, 256), ws: ws}
 	s := subscription{conn: c, room: roomId, sessionId: sessionId}
+
+	mx.Lock()
 	sessionId = sessionId + 1
+	defer mx.Unlock()
+
 	h.register <- s
 	go s.writePump()
 	go s.readPump()
